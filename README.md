@@ -1,5 +1,5 @@
 # questionnaireparser
-extract data from fillable forms 
+extract data from fillable pdf forms 
 
 
 import os
