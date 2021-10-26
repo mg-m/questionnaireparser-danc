@@ -32,12 +32,10 @@ for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     data=pdf.getFormTextFields()
     print(get_filename_without_extension(file))
     txt=get_filename_without_extension(file)
-    subj_id=txt.split("_")
-    visit=txt.split("_")
-    questionnaire=txt.split("_")
-    data['subj_id']=subj_id[0]
-    data['visit']=visit[1]
-    data['questionnaire']=questionnaire[2]
+    cols=txt.split("_")
+    data['subj_id']=cols[0]
+    data['visit']=cols[1]
+    data['questionnaire']=cols[2]
     print(data)
     data_list.append(data)
     df=pd.DataFrame(data_list)
