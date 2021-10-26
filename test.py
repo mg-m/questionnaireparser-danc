@@ -30,11 +30,6 @@ for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     pdfobject=open(file, 'rb')
     pdf=pypdf.PdfFileReader(pdfobject)
     data=pdf.getFormTextFields()
-    cols = df.columns.tolist()
-    cols = cols[-1:] + cols[:-1]
-    cols = cols[-1:] + cols[:-1]
-    cols = cols[-1:] + cols[:-1]
-    print(cols)
     print(get_filename_without_extension(file))
     txt=get_filename_without_extension(file)
     subj_id=txt.split("_")
@@ -43,9 +38,17 @@ for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     data['subj_id']=subj_id[0]
     data['visit']=visit[1]
     data['questionnaire']=questionnaire[2]
+    print(data)
     data_list.append(data)
-df=pd.DataFrame(data_list)
-df.to_csv('test.csv',index=False)
+    df=pd.DataFrame(data_list)
+    cols = list(df.columns.values)
+    cols = cols[-1:] + cols[:-1]
+    cols = cols[-1:] + cols[:-1]
+    cols = cols[-1:] + cols[:-1]
+    df = df[cols]
+    print(cols)
+    print(df)
+    df.to_csv('test.csv',index=False)
 
 
 # In[ ]:
