@@ -40,9 +40,6 @@ for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     data_list.append(data)
     df=pd.DataFrame(data_list)
     cols = list(df.columns.values)
-    cols = cols[-1:] + cols[:-1]
-    cols = cols[-1:] + cols[:-1]
-    cols = cols[-1:] + cols[:-1]
     df = df[cols]
     print(cols)
     print(df)
