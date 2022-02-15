@@ -1,2 +1,2 @@
 # questionnaireparser
-extract data from fillable pdf forms 
+extract data from fillable pdf forms (text and radiobuttons) 
