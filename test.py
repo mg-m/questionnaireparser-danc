@@ -20,16 +20,13 @@ def get_filename_without_extension(path):
         return filename_without_extension
 
 
-# In[23]:
-
-
-input_dir=r'C:\Users\mgautier\Desktop\questionnaires'
-data_list=[]
+# In[ ]:
 for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     print(file)
     pdfobject=open(file, 'rb')
     pdf=pypdf.PdfFileReader(pdfobject)
     data=pdf.getFormTextFields()
+    boxes=pdf.getFields()
     print(get_filename_without_extension(file))
     txt=get_filename_without_extension(file)
     cols=txt.split("_")
@@ -38,15 +35,17 @@ for file in glob.glob(os.path.join(input_dir,"*.pdf")):
     data['questionnaire']=cols[2]
     print(data)
     data_list.append(data)
+    data_list.append(boxes)
     df=pd.DataFrame(data_list)
     cols = list(df.columns.values)
+    #cols = cols[-1:] + cols[:-1]
+    #cols = cols[-1:] + cols[:-1]
+    #cols = cols[-1:] + cols[:-1]
     df = df[cols]
     print(cols)
     print(df)
     df.to_csv('test.csv',index=False)
 
-
-# In[ ]:
 
 
 
