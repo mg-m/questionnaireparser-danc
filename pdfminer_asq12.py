@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import os
+import sys
 import pdfminer
 import pandas
 import pandas as pd
@@ -16,208 +14,147 @@ from pdfminer.pdftypes import resolve1
 from pdfminer.psparser import PSLiteral, PSKeyword
 from pdfminer.utils import decode_text
 
-
-# In[ ]:
-
-
 def get_filename_without_extension(path):
         filename_basename = os.path.basename(path)
         filename_without_extension=filename_basename.split('.')[0]
         return filename_without_extension
 
+input_dir=r'C:\Users\mgautier\Desktop\DEVMOBETA\questionnaires\data\visit_3\asq'
+output_dir=r'C:\Users\mgautier\Desktop\DEVMOBETA\questionnaires\derivatives\visit_3\asq'
 
-# In[ ]:
+def parse_questionnaires(input_dir, output_dir):
+    data_list={}
+    for file in glob.glob(os.path.join(input_dir,"*.pdf")):
 
+        with open(file,'rb')as fp:
+            parser=PDFParser(fp)
+            doc=PDFDocument(parser)
+            res=resolve1(doc.catalog)
 
-input_dir=r'C:\Users\mgautier\Desktop\DEVMOBETA\questionnaires\visit_3\asq'
-data_list={}
-for file in glob.glob(os.path.join(input_dir,"*.pdf")):
-    #print(file)
+            if 'AcroForm' not in res:
+                raise ValueError("No AcroForm found")
 
-    with open(file,'rb')as fp:
-        parser=PDFParser(fp)
-        doc=PDFDocument(parser)
-        res=resolve1(doc.catalog)
+            fields=resolve1(doc.catalog['AcroForm'])['Fields']
 
-        if 'AcroForm' not in res: 
-            raise ValueError("No AcroForm found")
+            for f in fields :
+                field = resolve1(f)
+                name,values=field.get('T'),field.get('V')
 
-        fields=resolve1(doc.catalog['AcroForm'])['Fields']
-    
-        for f in fields : 
-            field = resolve1(f)
-            name,values=field.get('T'),field.get('V')
+                name=decode_text(name)
+                values=resolve1(values)
 
-            name=decode_text(name)
-            values=resolve1(values) 
-            #print(name,values)
+                if name not in data_list:
+                    data_list[name]=[]
+                data_list[name].append(values)
 
-            if name not in data_list:
-                data_list[name]=[]
-            data_list[name].append(values)
-            
-df=pd.DataFrame(data_list)
-print(df)
-df.to_csv('asq_3.csv',index=False)
+    df=pd.DataFrame(data_list)
+    df=df.drop(columns=['date','child first name','child last name','child age','initials','date of birth','nb of weeks if premature','sex','parent first name','parent last name','parent initials','link','adress','city','region','postal code','country','house phone number','other phone number','mail','people helping filling the questionnaire','subject child number','program number','program name','child age if premature','notes',
+                        'communication1_score','communication2_score','communication3_score','communication4_score','communication5_score','communication6_score','communication_total_score',
+                       'gmotor1_score','gmotor2_score','gmotor3_score','gmotor4_score','gmotor5_score','gmotor6_score','gmotor_total_score',
+                       'fmotor1_score','fmotor2_score','fmotor3_score','fmotor4_score','fmotor5_score','fmotor6_score','fmotor_total_score',
+                       'pbsolving1_score','pbsolving2_score','pbsolving3_score','pbsolving4_score','pbsolving5_score','pbsolving6_score','pbsolving_total_score',
+                       'social1_score','social2_score','social3_score','social4_score','social5_score','social6_score','social_total_score',
+                       'global1','global2','global3','global4','global5','global6','global7','global8','global9','global1_no','global2_no','global3_no','global4_yes','global5_yes','global6_yes','global7_yes','global8_yes','global9_yes'])
+    df=df.dropna(how='all') #delete if all values are nan
+    df.to_csv(os.path.join(output_dir,'asq_12.csv'),index=False)
 
+def process_asq12(data_dir):
+    df = pd.read_csv(os.path.join(data_dir, 'asq_12.csv'))
 
-# In[ ]:
+    col_list_communication= ['communication1','communication2','communication3','communication4','communication5','communication6']
+    for col in col_list_communication:
+        df[col]=df[col].str.replace("/","")
+        df[col]=df[col].str.replace("'","")
+        df[col] = df[col].astype(float)
 
+    col_list_gmotor= ['gmotor1','gmotor2','gmotor3','gmotor4','gmotor5','gmotor6']
+    for col in col_list_gmotor:
+        df[col]=df[col].str.replace("/","")
+        df[col]=df[col].str.replace("'","")
+        df[col] = df[col].astype(float)
 
-input_dir=r'C:\Users\mgautier\Projects\QuestionnaireParser'
-df = pd.read_csv('asq_3.csv')
-df.head()
-#print(df.head)
-df.shape
-#print (df.shape)
-df=df.drop(columns=['date','child first name','child last name','child age','initials','date of birth','nb of weeks if premature','sex','parent first name','parent last name','parent initials','link','adress','city','region','postal code','country','house phone number','other phone number','mail','people helping filling the questionnaire','subject child number','program number','program name','child age if premature','notes',
-                    'communication1_score','communication2_score','communication3_score','communication4_score','communication5_score','communication6_score','communication_total_score',
-                   'gmotor1_score','gmotor2_score','gmotor3_score','gmotor4_score','gmotor5_score','gmotor6_score','gmotor_total_score',
-                   'fmotor1_score','fmotor2_score','fmotor3_score','fmotor4_score','fmotor5_score','fmotor6_score','fmotor_total_score',
-                   'pbsolving1_score','pbsolving2_score','pbsolving3_score','pbsolving4_score','pbsolving5_score','pbsolving6_score','pbsolving_total_score',
-                   'social1_score','social2_score','social3_score','social4_score','social5_score','social6_score','social_total_score',
-                   'global1','global2','global3','global4','global5','global6','global7','global8','global9','global1_no','global2_no','global3_no','global4_yes','global5_yes','global6_yes','global7_yes','global8_yes','global9_yes'])
-print(df)
-df.notna()  #indicate existing non missing values
-df.dropna(how='all') #delete if all values are nan
+    col_list_fmotor= ['fmotor1','fmotor2','fmotor3','fmotor4','fmotor5','fmotor6']
+    for col in col_list_fmotor:
+        df[col]=df[col].str.replace("/","")
+        df[col]=df[col].str.replace("'","")
+        df[col] = df[col].astype(float)
 
-col_list_communication= ['communication1','communication2','communication3','communication4','communication5','communication6']
-for col in col_list_communication:
-    df[col]=df[col].str.replace("/","")
-    df[col]=df[col].str.replace("'","")
-    df[col] = df[col].astype(float)
-    
-col_list_gmotor= ['gmotor1','gmotor2','gmotor3','gmotor4','gmotor5','gmotor6']
-for col in col_list_gmotor:
-    df[col]=df[col].str.replace("/","")
-    df[col]=df[col].str.replace("'","")
-    df[col] = df[col].astype(float)
+    col_list_pbsolving= ['pbsolving1','pbsolving2','pbsolving3','pbsolving4','pbsolving5','pbsolving6']
+    for col in col_list_pbsolving:
+        df[col]=df[col].str.replace("/","")
+        df[col]=df[col].str.replace("'","")
+        df[col] = df[col].astype(float)
 
-col_list_fmotor= ['fmotor1','fmotor2','fmotor3','fmotor4','fmotor5','fmotor6']
-for col in col_list_fmotor:
-    df[col]=df[col].str.replace("/","")
-    df[col]=df[col].str.replace("'","")
-    df[col] = df[col].astype(float)
-    
-col_list_pbsolving= ['pbsolving1','pbsolving2','pbsolving3','pbsolving4','pbsolving5','pbsolving6']
-for col in col_list_pbsolving:
-    df[col]=df[col].str.replace("/","")
-    df[col]=df[col].str.replace("'","")
-    df[col] = df[col].astype(float)
-    
-col_list_social= ['social1','social2','social3','social4','social5','social6']
-for col in col_list_social:
-    df[col]=df[col].str.replace("/","")
-    df[col]=df[col].str.replace("'","")
-    df[col] = df[col].astype(float)
+    col_list_social= ['social1','social2','social3','social4','social5','social6']
+    for col in col_list_social:
+        df[col]=df[col].str.replace("/","")
+        df[col]=df[col].str.replace("'","")
+        df[col] = df[col].astype(float)
 
+    for index, row in df.iterrows():
+        communication = float(row[col_list_communication].sum())
+        df['communication']=communication
 
-# In[ ]:
+        # if communication<=15.64:
+        #   print("communication deficit")
+        # elif (communication>15.64 and communication<29.43):
+        #   print("monitor communication")
+        # elif communication>=29.43:
+        #   print ("communication ok")
 
+        gmotor=float(row[col_list_gmotor].sum())
+        df['gmotor']=gmotor
 
-for index, row in df.iterrows():
+        # if gmotor<=21.49:
+        #     print("gmotor deficit")
+        # elif (21.49>gmotor and gmotor <35.71):
+        #     print("monitor gmotor")
+        # elif gmotor>=35.71:
+        #     print ("gmotor ok")
 
-  row['communication'] = row[col_list_communication].sum()
-  print(row)
-  
-  communication=float(row["communication"])
-  print(communication)
-  
-  if communication<=15.64: 
-      print("communication deficit")
-  elif (communication>15.64 and communication<29.43):
-      print("monitor communication")
-  elif communication>=29.43:
-      print ("communication ok")
-      
-df['communication']=communication
-df.to_csv('asq_3_result.csv',index=False)
+        fmotor=float(row[col_list_fmotor].sum())
+        df['fmotor']=fmotor
 
+        # if fmotor<=34.50:
+        #     print("fmotor deficit")
+        # elif (34.50>fmotor and fmotor<43.36):
+        #     print("monitor fmotor")
+        # elif fmotor>=43.36:
+        #     print ("fmotor ok")
 
-# In[ ]:
+        pbsolving = float(row[col_list_pbsolving].sum())
+        df['pbsolving']=pbsolving
 
+        # if pbsolving<=27.32:
+        #     print("pbsolving deficit")
+        # elif (27.32>pbsolving and pbsolving<38.16):
+        #     print("monitor pbsolving")
+        # elif pbsolving>=38.16:
+        #     print ("pbsolving ok")
 
-for index, row in df.iterrows():
-    
-    row['gmotor'] = row[col_list_gmotor].sum()
-    print(row)
-    
-    gmotor=float(row["gmotor"])
-    print(gmotor)
-    
-    if gmotor<=21.49: 
-        print("gmotor deficit")
-    elif (21.49>gmotor and gmotor <35.71):
-        print("monitor gmotor")
-    elif gmotor>=35.71:
-        print ("gmotor ok")
-        
-df['gmotor']=gmotor
-df.to_csv('asq_3_result.csv',index=False)
+        social= float(row[col_list_social].sum())
+        df['social']=social
 
+        # if social<=21.73:
+        #     print("social deficit")
+        # elif (21.73>social and social<33.73):
+        #     print("monitor social")
+        # elif social>=33.73:
+        #     print ("social ok")
 
-# In[ ]:
+        df.to_csv(os.path.join(data_dir,'asq_12_result.csv'),index=False)
 
-
-for index, row in df.iterrows():
-
-    row['fmotor'] = row[col_list_fmotor].sum()
-    print(row)
-    
-    fmotor=float(row["fmotor"])
-    print(fmotor)
-    
-    if fmotor<=34.50: 
-        print("fmotor deficit")
-    elif (34.50>fmotor and fmotor<43.36):
-        print("monitor fmotor")
-    elif fmotor>=43.36:
-        print ("fmotor ok")
-        
-df['fmotor']=fmotor
-df.to_csv('asq_3_result.csv',index=False)
-
-
-# In[ ]:
-
-
-for index, row in df.iterrows():
-    
-    row['pbsolving'] = row[col_list_pbsolving].sum()
-    print(row)
-    
-    pbsolving=float(row["pbsolving"])
-    print(pbsolving)
-    
-    if pbsolving<=27.32: 
-        print("pbsolving deficit")
-    elif (27.32>pbsolving and pbsolving<38.16):
-        print("monitor pbsolving")
-    elif pbsolving>=38.16:
-        print ("pbsolving ok")
-        
-df['pbsolving']=pbsolving
-df.to_csv('asq_3_result.csv',index=False)
-
-
-# In[ ]:
-
-
-for index, row in df.iterrows():
-
-    row['social'] = row[col_list_social].sum()
-    print(row)
-    
-    social=float(row["social"])
-    print(social)
-    
-    if social<=21.73: 
-        print("social deficit")
-    elif (21.73>social and social<33.73):
-        print("monitor social")
-    elif social>=33.73:
-        print ("social ok")
-        
-df['social']=social
-df.to_csv('asq_3_result.csv',index=False)
-
+if __name__ == '__main__':
+    try:
+        input_dir = sys.argv[1]
+    except:
+        print("incorrect arguments")
+        sys.exit()
+    try:
+        output_dir = sys.argv[2]
+    except:
+        print("incorrect arguments")
+        sys.exit()
+    os.makedirs(output_dir, exist_ok=True)
+    parse_questionnaires(input_dir, output_dir)
+    process_asq12(output_dir)
