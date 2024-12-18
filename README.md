@@ -1,3 +1,3 @@
 # questionnaireparser
 extract data from fillable pdf forms (text and radiobuttons) 
-and compute scores 
+compute scores for these questionnaires : ASQ (3, 6, 12), BFNE, BAI, EPDS, IBQR
